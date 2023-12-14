@@ -1,0 +1,9 @@
+{
+	"name": "suvi-data-factory",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "4f7f26f2-cbad-4604-b2eb-5c8ac251d9d5",
+		"tenantId": "1e56bd14-ac74-41b1-9a52-197c082da0fc"
+	}
+}
