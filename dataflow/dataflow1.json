@@ -1,0 +1,96 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ADLSG2",
+						"type": "DatasetReference"
+					},
+					"name": "Source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ADLSG2",
+						"type": "DatasetReference"
+					},
+					"name": "Sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "Filter1"
+				},
+				{
+					"name": "DerivedColumn1"
+				},
+				{
+					"name": "Window1"
+				},
+				{
+					"name": "Aggregate1"
+				},
+				{
+					"name": "AlterRow1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          movie as string,",
+				"          title as string,",
+				"          genres as string,",
+				"          year as string,",
+				"          Rating as string,",
+				"          {Rotton Tomato} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> Source1",
+				"Source1 select(mapColumn(",
+				"          movie,",
+				"          title,",
+				"          genres,",
+				"          year,",
+				"          {Rotten Tomato} = {Rotton Tomato}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> Select1",
+				"Select1 filter(toInteger(year) > 1950) ~> Filter1",
+				"Filter1 derive(genres = iif(locate('|', genres)>1,  left(genres,locate('|',genres)-1),genres)) ~> DerivedColumn1",
+				"DerivedColumn1 window(over(genres,",
+				"          year),",
+				"     desc({Rotten Tomato}, true),",
+				"     RatingsRank = rank()) ~> Window1",
+				"Window1 aggregate(groupBy(genres,",
+				"          year),",
+				"     AverageRating = avg(toInteger({Rotten Tomato})),",
+				"          HighestRead = first(title),",
+				"          LowestRead = last(title),",
+				"          NumberOfMovies = count()) ~> Aggregate1",
+				"Aggregate1 alterRow(upsertIf(true())) ~> AlterRow1",
+				"AlterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          movie as string,",
+				"          title as string,",
+				"          genres as string,",
+				"          year as string,",
+				"          Rating as string,",
+				"          {Rotton Tomato} as string",
+				"     ),",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> Sink1"
+			]
+		}
+	}
+}
